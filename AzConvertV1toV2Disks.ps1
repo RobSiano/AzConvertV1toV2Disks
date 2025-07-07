@@ -17,7 +17,7 @@
     REQUIREMENTS: Azure PowerShell Module (Az) installed and updated to the latest version.
 
 .LINK
-    https://github.com/RobSiano
+    https://github.com/RobSiano/AzConvertV1toV2Disks/blob/main/AzConvertV1toV2Disks.ps1
     https://learn.microsoft.com/en-us/azure/virtual-machines/disks-convert-types?tabs=azure-powershell#migrate-to-premium-ssd-v2-or-ultra-disk-using-snapshots
 
 .DESCRIPTION
@@ -118,7 +118,7 @@ function Convert-Disks {
     Write-Host "Starting disk conversion for subscription: $SubscriptionId" -ForegroundColor Green
 
     # Get all Premium SSD v1 managed disks that are not OS disks
-    $disks = Get-AzDisk | Where-Object {$_.OsType -eq $null -and $_.Sku.Name -eq "Premium_LRS"}
+    $disks = Get-AzDisk | Where-Object {$_.OsType -eq $null -and $_.Sku.Name -eq "Premium_LRS" -and $_.DiskSizeGB -ge 512}}
 
     # Ensure disks are found
     if ($disks) {
