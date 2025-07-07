@@ -3,7 +3,7 @@
 This PowerShell Script takes Azure Subscriptions and converts Premium SSD V1 disks to Premium SSD V2 disks. It will skip all unsupported disk types such as OS disks. It will also attempt to disable caching, bursting, and double encryption to meet migration requirements.
 
 Modules Required:
-Microsft Az (checks and install is in code)
+* Microsft Az (checks and install is in code)
 
 PowerShell Versions Tested:
 * PowerShell 7.5.2
