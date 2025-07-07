@@ -43,22 +43,22 @@ Start-Transcript -Path $LogFile -Append
 Write-Host "AzConvertV1toV2Disks logging started to file $LogFile" -ForegroundColor Cyan
 
 # Check if Az module is installed
-#if (-not (Get-Module -ListAvailable -Name Az)) {
-#    Write-Host "Az module is not installed. Installing Az module..." -ForegroundColor Yellow
-#    Install-Module -Name Az -AllowClobber -Force
-#} else {
-#   Write-Host "Az module is already installed." -ForegroundColor Green
-#}   
+if (-not (Get-Module -ListAvailable -Name Az)) {
+    Write-Host "Az module is not installed. Installing Az module..." -ForegroundColor Yellow
+    Install-Module -Name Az -AllowClobber -Force
+} else {
+   Write-Host "Az module is already installed." -ForegroundColor Green
+}   
 
 # Import the Az module and check if it has imported successfully
-#Import-Module Az -Force
-#if (Get-Module -Name Az) {              
-#    Write-Host "Az module imported successfully." -ForegroundColor Green
-#} else {
-#    Write-Host "Failed to import Az module. Exiting script." -ForegroundColor Red
-#    Stop-Transcript
-#    exit
-#}
+Import-Module Az -Force
+if (Get-Module -Name Az) {              
+    Write-Host "Az module imported successfully." -ForegroundColor Green
+} else {
+    Write-Host "Failed to import Az module. Exiting script." -ForegroundColor Red
+    Stop-Transcript
+    exit
+}
 
 # Check if the user has provided Subscription ID
 if (-not $SubscriptionId) {
