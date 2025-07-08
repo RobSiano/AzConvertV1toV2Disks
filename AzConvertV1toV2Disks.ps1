@@ -10,7 +10,6 @@
 
 .EXAMPLE
     PS C:\> .\AzConvertV1toV2Disks -SubscriptionID "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx"
-
     If run without a SubscriptionID, the script will prompt you to select a CSV file containing SubscriptionID, VirtualMachine, and ResourceGroup Names.
 
 .NOTES
@@ -42,22 +41,22 @@ Start-Transcript -Path $LogFile -Append
 Write-Host "AzConvertV1toV2Disks logging started to file $LogFile" -ForegroundColor Cyan
 
 # Check if Az module is installed
-#if (-not (Get-Module -ListAvailable -Name Az)) {
-#    Write-Host "Az module is not installed. Installing Az module..." -ForegroundColor Yellow
-#    Install-Module -Name Az -AllowClobber -Force
-#} else {
-#   Write-Host "Az module is already installed." -ForegroundColor Green
-#}   
+if (-not (Get-Module -ListAvailable -Name Az)) {
+    Write-Host "Az module is not installed. Installing Az module..." -ForegroundColor Yellow
+    Install-Module -Name Az -AllowClobber -Force
+} else {
+   Write-Host "Az module is already installed." -ForegroundColor Green
+}   
 
 # Import the Az module and check if it has imported successfully
-#Import-Module Az -Force
-#if (Get-Module -Name Az) {              
-#    Write-Host "Az module imported successfully." -ForegroundColor Green
-#} else {
-#    Write-Host "Failed to import Az module. Exiting script." -ForegroundColor Red
-#    Stop-Transcript
-#    exit
-#}
+Import-Module Az -Force
+if (Get-Module -Name Az) {              
+    Write-Host "Az module imported successfully." -ForegroundColor Green
+} else {
+    Write-Host "Failed to import Az module. Exiting script." -ForegroundColor Red
+    Stop-Transcript
+    exit
+}
 
 # ---------------------------------Start of New CSV File function---------------------------------------
 # Function to open a file dialog and import a CSV file
@@ -98,7 +97,7 @@ function Convert-Disks {
         return
     }
     
-    # Begin to convert disks 
+    # Begin to Convert Disks 
             $vm = Get-AzVM -ResourceGroupName $disk.ResourceGroupName -Name $disk.managedby.split('/')[-1]
             $vmname = $vm.Name
             Write-Host "Processing disk: $diskname for VMname $vmname" -ForegroundColor Cyan
@@ -155,6 +154,54 @@ function Convert-Disks {
                             }
                         }
                     }
+
+            # Check if the VM is protected by Azure Backup
+            # Get all Recovery Services vaults
+            $vaults = Get-AzRecoveryServicesVault
+
+            foreach ($vault in $vaults) {
+                Set-AzRecoveryServicesVaultContext -Vault $vault
+
+                # Get all containers of type AzureVM
+                $containers = Get-AzRecoveryServicesBackupContainer -ContainerType AzureVM
+                $container = $containers | Where-Object { $_.FriendlyName -eq $vmName }
+
+                if ($container) {
+                    $backupItem = Get-AzRecoveryServicesBackupItem -Container $container -WorkloadType AzureVM | Where-Object {
+                        $_.Properties.SourceResourceId -eq $vmId
+                    }
+
+                    if ($backupItem) {
+                        $policy = Get-AzRecoveryServicesBackupProtectionPolicy -Name $backupItem.ProtectionPolicyName
+
+                        $isEnhanced = $policy.PolicySubType -eq "Enhanced"
+
+                        $backuparray += [PSCustomObject]@{
+                            VMName            = $vmName
+                            VaultName         = $vault.Name
+                            PolicyName        = $policy.Name
+                            IsEnhancedPolicy  = $isEnhanced
+                            BackupManagementType        = $policy.BackupManagementType
+                        }
+
+                        break
+                    }
+                }
+            }
+
+            if ($backupItem) {
+                Write-Host "VM '$vmName' is protected by Azure Backup with policy '$($policy.Name)' in vault '$($vault.Name)'." -ForegroundColor Cyan
+                if ($isEnhanced) {
+                    Write-Host "The policy is an Enhanced Backup Policy." -ForegroundColor Green
+                } else {
+                    Write-Host "The policy is a Standard Backup Policy. Please convert to Enhanced Policy." -ForegroundColor Yellow
+                    Return
+                    }
+            }
+            else{
+                Write-Output "VM '$vmName' is not protected by Azure Backup. Continuing Script" -ForegroundColor Cyan
+                }
+
 
             # Update the disk SKU to PremiumV2_LRS
             $diskmigration = get-azdisk $disk.Name -ResourceGroupName $disk.ResourceGroupName
@@ -267,8 +314,8 @@ if (-not $SubscriptionId) {
         }
     }
 
-    # Process each row in the CSV data
-    foreach ($row in $csvData) {
+# Process each row in the CSV data
+foreach ($row in $csvData) {
             # Extract SubscriptionID, VirtualMachine, and ResourceGroup from the row
             $SubscriptionIdrun = $row.SubscriptionId
             $VM = $row.VirtualMachine
@@ -304,14 +351,14 @@ if (-not $SubscriptionId) {
             # Initialize an empty list to hold matching VMs
             $matchingVMs = @()
             foreach ($VM in $VMs) {
-                    $resourceGroup = $vm.ResourceGroupName
+                    $ResourceGroupName = $vm.ResourceGroupName
                     $vmName = $vm.Name
 
                     # Combine OS and data disks
                     $allDisks = $vm.StorageProfile.DataDisks
 
                     foreach ($diskRef in $allDisks) {
-                        $disk = Get-AzDisk -ResourceGroupName $resourceGroup -DiskName $diskRef.Name
+                        $disk = Get-AzDisk -ResourceGroupName $ResourceGroupName -DiskName $diskRef.Name
 
                         if ($disk.DiskSizeGB -gt 512 -and $disk.OsType -eq $null -and $disk.Sku.Name -eq "Premium_LRS") {
                             $matchingVMs += $vm
@@ -323,13 +370,13 @@ if (-not $SubscriptionId) {
             # Starting disk conversion process
             Write-Host "Starting disk conversion in $subscriptionIdrun..." -ForegroundColor Green
             foreach ($vm in $matchingVMs){
-                                #stopping VM if it is running
-                                $vmname = $vm.name
-                                Write-Host "Stopping VM: $vmname" -ForegroundColor Green
-                                $stoppedVM = Stop-AzVM -ResourceGroupName $vm.ResourceGroupName -Name $vm.Name -Force
+                            #stopping VM if it is running
+                            $vmname = $vm.name
+                            Write-Host "Stopping VM: $vmname" -ForegroundColor Green
+                            $stoppedVM = Stop-AzVM -ResourceGroupName $vm.ResourceGroupName -Name $vm.Name -Force
                             
-                                #checking VM is deallocated
-                                $vmrecheck = get-azvm -status -resourcegroupname $vm.ResourceGroupName -name $vm.Name
+                            #checking VM is deallocated
+                            $vmrecheck = get-azvm -status -resourcegroupname $vm.ResourceGroupName -name $vm.Name
                             if ($vmrecheck.statuses.DisplayStatus[-1] -eq "VM deallocated") {
                                     Write-Host "Successfully stopped VM: $($vm.Name)" -ForegroundColor Green
                                     $VMstopped = $true
@@ -343,7 +390,7 @@ if (-not $SubscriptionId) {
                             foreach ($diskRef in $allDataDisks) {
                                 $disk = Get-AzDisk -DiskName $diskRef.Name -ResourceGroupName $vm.ResourceGroupName -ErrorAction SilentlyContinue
                                 if ($disk.count -eq 0) {
-                                    Write-Host "Disk $diskRef.Name not found in Resource Group: $vm.ResourceGroupName. Skipping disk." -ForegroundColor Yellow
+                                    Write-Host "Disk $diskRef Name not found in Resource Group: $vm.ResourceGroupName. Skipping disk." -ForegroundColor Yellow
                                     continue
                                 }
                                 
