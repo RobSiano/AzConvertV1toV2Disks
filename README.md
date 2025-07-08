@@ -25,7 +25,7 @@ The command to execute the code will be:
 4. Review Script Execution in terminal or log file.
 
 
-#Option 2: Import a CSV file from a Resource Graph Query, export to CSV file, and then submit the Subscriptions and VM's you would like to target specifically.
+##Option 2: Import a CSV file from a Resource Graph Query, export to CSV file, and then submit the Subscriptions and VM's you would like to target specifically.
 Instructions
 1. Open https://portal.azure.com and login.
 
