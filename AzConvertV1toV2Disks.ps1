@@ -11,6 +11,8 @@
 .EXAMPLE
     PS C:\> .\AzConvertV1toV2Disks -SubscriptionID "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx"
 
+    If run without a SubscriptionID, the script will prompt you to select a CSV file containing SubscriptionID, VirtualMachine, and ResourceGroup Names.
+
 .NOTES
     AUTHOR: ROB SIANO - SENIOR CLOUD SOLUTION ARCHITECT | Azure Infrastructure | Microsoft
     PERMISSIONS: Ensure you have the necessary permissions to stop/start VMs and update disk configurations in the specified subscriptions.
@@ -217,7 +219,7 @@ if ($currentSubscriptionID -eq $SubscriptionIdrun) {
         } else {
             Write-Host "You have the necessary permissions to manage disks in the specified subscription." -ForegroundColor Green
         }
-        }
+    }
 }
 # -------------------------------- End of Login-to-Azure function ----------------------------------------
 
