@@ -66,4 +66,4 @@ An Explorer window will appear for you to select the .CSV file and Submit it for
 7. 4. Review Script Execution in terminal or log file.
 
 Considerations:
-For a more targeted approach, please consider using a resource graph query to search for qualifying disks and then modifying this code to take in a .CSV file as an input instead. You would then loop through each line sorted by subscription to target only the disks you prefer to upgrade. Also consider re-enabling double encryption if required via code. Please read the disclaimer at the top of the AzConvertV1toV2Disks.ps1 before executing the code.
+For a more targeted approach, please consider using the CSV import Option 2 instead. Also consider re-enabling double encryption if required via code. Please read the disclaimer at the top of the AzConvertV1toV2Disks.ps1 before executing the code.
