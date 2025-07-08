@@ -11,7 +11,7 @@ PowerShell Versions Tested:
 Files to Download:
 * AzConvertV1toV2Disks.ps1
 
-<b>Option 1: Selecting a Subscription and running all all VM's/Disks that are supported
+#Option 1: Selecting a Subscription and running all all VM's/Disks that are supported
 Instructions
 1. Download AzConvertV1toV2Disks.ps1
 
@@ -25,7 +25,7 @@ The command to execute the code will be:
 4. Review Script Execution in terminal or log file.
 
 
-<b>Option 2: Import a CSV file from a Resource Graph Query, export to CSV file, and then submit the Subscriptions and VM's you would like to target specifically.
+#Option 2: Import a CSV file from a Resource Graph Query, export to CSV file, and then submit the Subscriptions and VM's you would like to target specifically.
 Instructions
 1. Open https://portal.azure.com and login.
 
