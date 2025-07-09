@@ -7,7 +7,7 @@ MS Link for reference:
 https://learn.microsoft.com/en-us/azure/virtual-machines/disks-convert-types?tabs=azure-powershell#migrate-to-premium-ssd-v2-or-ultra-disk-using-snapshots
 
 Modules Required:
-* Microsft Az (validates and installs if not detected)
+* Microsoft Az (validates and installs if not detected)
 
 PowerShell Versions Tested:
 * PowerShell 7.5.2
