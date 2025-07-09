@@ -1,21 +1,21 @@
 <#
 .SYNOPSIS
     This PowerShell Script takes Azure Subscriptions and converts Premium SSD V1 disks to Premium SSD V2 disks. It will skip all unsupported disk types such as OS disks. It will also attempt to disable caching, bursting, and double encryption to meet migration requirements.
-    Those features need to be disabled in order to perform the migration to Premium SSD V2. The migration path for disks that do not meet requirements involves creating snapshots and deploying new disks from snapshot which is not covered in this script.
-    See links below for more information
-    Information/Logging is collected and outputted to a text file in the same folder the script was executed in.
+    Those features need to be disabled in order to perform the migration to Premium SSD V2. Azure Backup policies must also be on Enhanced or disabled before performing the migration, the code will check that this condition is met but will not change your backup policy or disable it.
+    The migration path for disks that do not meet requirements involves creating snapshots and deploying new disks from snapshot which is not covered in this code.
+    See links below for more information. Information/Logging is collected and outputted to a text file in the same folder the script was executed in.
 
 .PARAMETER SubscriptionId
     Specify the SubscriptionID to target.
 
 .EXAMPLE
     PS C:\> .\AzConvertV1toV2Disks -SubscriptionID "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx"
-    If run without a SubscriptionID, the script will prompt you to select a CSV file containing SubscriptionID, VirtualMachine, and ResourceGroup Names.
+    If run the code without a SubscriptionID, the script will prompt you to select a CSV file containing SubscriptionID, VirtualMachine, and ResourceGroup Names.
 
 .NOTES
     AUTHOR: ROB SIANO - SENIOR CLOUD SOLUTION ARCHITECT | Azure Infrastructure | Microsoft
-    PERMISSIONS: Ensure you have the necessary permissions to stop/start VMs and update disk configurations in the specified subscriptions.
-    REQUIREMENTS: Azure PowerShell Module (Az) installed and updated to the latest version.
+    PERMISSIONS: Ensure you have the necessary permissions to stop/start VMs and update disk configurations in the specified subscriptions. (code will validate)
+    REQUIREMENTS: Azure PowerShell Module (Az) installed and updated to the latest version.(code will validate and install if it is not detected)
 
 .LINK
     https://github.com/RobSiano/AzConvertV1toV2Disks/blob/main/AzConvertV1toV2Disks.ps1
