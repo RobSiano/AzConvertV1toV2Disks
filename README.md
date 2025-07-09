@@ -30,7 +30,9 @@ Instructions
 1. Open https://portal.azure.com and login.
 
 2. Navigate to Azure Resource Graph Explorer and Input the following Query:
- Resources
+
+print(
+Resources
 | where type == "microsoft.compute/disks"
 | extend diskState = tostring(properties.diskState)
 | where not(name endswith "-ASRReplica" or name startswith "ms-asr-" or name startswith "asrseeddisk-")
@@ -48,7 +50,7 @@ Instructions
    caching = tostring(props.diskState), // Note: caching is typically set at the VM level, not directly on the dis
    VirtualMachineResourceID=managedBy,
    VirtualMachine,
-   SubscriptionID
+   SubscriptionID)
    
 3. Select Download as CSV file and save to your local disk. (Modify the file as required to remove target VM's)
 
