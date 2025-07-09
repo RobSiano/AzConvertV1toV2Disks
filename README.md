@@ -4,7 +4,7 @@ This PowerShell Script takes Azure Subscriptions and converts Premium SSD V1 dis
 See links below for more information. Information/Logging is collected and outputted to a text file in the same folder the script was executed in.
 
 MS Link for reference:
-https://learn.microsoft.com/en-us/azure/virtual-machines/disks-convert-types?tabs=azure-powershell#migrate-to-premium-ssd-v2-or-ultra-disk-using-snapshots
+https://learn.microsoft.com/en-us/azure/virtual-machines/disks-convert-types?tabs=azure-powershell
 
 Modules Required:
 * Microsoft Az (validates and installs if not detected)
