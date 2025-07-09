@@ -35,7 +35,7 @@ The command to execute the code will be:
 ----
 
 # **Run Option 2**
-**Import a CSV file from a Resource Graph Query, export to CSV file, and then submit the Subscriptions and VM's you would like to target specifically:**
+**Import a CSV file from a Resource Graph Query. Generate query, export to CSV file, and then submit the Subscriptions and VM's you would like to target specifically:**
 
 Instructions
 1. Open https://portal.azure.com and login.
