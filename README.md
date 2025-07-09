@@ -63,7 +63,7 @@ The command to execute the code will be:
 
 An Explorer window will appear for you to select the .CSV file and Submit it for processing
 
-7. 4. Review Script Execution in terminal or log file.
+7. Review Script Execution in terminal or log file.
 
 Considerations:
 For a more targeted approach, please consider using the CSV import Option 2 instead. Also consider re-enabling double encryption if required via code. Please read the disclaimer at the top of the AzConvertV1toV2Disks.ps1 before executing the code.
