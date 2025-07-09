@@ -19,7 +19,7 @@
 
 .LINK
     https://github.com/RobSiano/AzConvertV1toV2Disks/blob/main/AzConvertV1toV2Disks.ps1
-    https://learn.microsoft.com/en-us/azure/virtual-machines/disks-convert-types?tabs=azure-powershell#migrate-to-premium-ssd-v2-or-ultra-disk-using-snapshots
+    https://learn.microsoft.com/en-us/azure/virtual-machines/disks-convert-types?tabs=azure-powershell
 
 .DESCRIPTION
     DISCLAIMER
