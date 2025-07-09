@@ -1,6 +1,10 @@
 # **AzConvertV1toV2Disks**
- 
-This PowerShell Script takes Azure Subscriptions and converts Premium SSD V1 disks to Premium SSD V2 disks. It will skip all unsupported disk types such as OS disks and check for Enhanced Backup Policy if Azure Backup is enabled. It will also attempt to disable caching, bursting, and double encryption to meet migration requirements.
+
+This PowerShell Script takes Azure Subscriptions and converts Premium SSD V1 disks to Premium SSD V2 disks. It will skip all unsupported disk types such as OS disks. It will also attempt to disable caching, bursting, and double encryption to meet migration requirements. Those features need to be disabled in order to perform the migration to Premium SSD V2. Azure Backup policies must also be on Enhanced or disabled before performing the migration, the code will check that this condition is met but will not change your backup policy or disable it. The migration path for disks that do not meet requirements involves creating snapshots and deploying new disks from snapshot which is not covered in this code.
+See links below for more information. Information/Logging is collected and outputted to a text file in the same folder the script was executed in.
+
+MS Link for reference:
+https://learn.microsoft.com/en-us/azure/virtual-machines/disks-convert-types?tabs=azure-powershell#migrate-to-premium-ssd-v2-or-ultra-disk-using-snapshots
 
 Modules Required:
 * Microsft Az (validates and installs if not detected)
