@@ -79,5 +79,15 @@ An Explorer window will appear for you to select the .CSV file and Submit it for
 
 7. Review Script Execution in terminal or log file.
 
-Considerations:
-For a more targeted approach, please consider using the CSV import Option 2 instead. Also consider re-enabling double encryption if required via code. Please read the disclaimer at the top of the AzConvertV1toV2Disks.ps1 before executing the code.
+**Important Considerations:**
+For a more targeted approach, please consider using the CSV import Option 2 instead. Also consider re-enabling double encryption if required via code. If Azure Backup is enabled with an older policy then you will need to manually migrate to Enhanced policy or it will skip it. Please read the disclaimer at the top of the AzConvertV1toV2Disks.ps1 before executing the code and validate by testing in non-production environment.
+
+---
+    DISCLAIMER
+    This script is provided as a personal/community tool to assist with the conversion of Azure Premium SSD V1 disks to Premium SSD V2 disks. It is not an official Microsoft product or service.
+    Use of this script is at your own risk, and it is recommended to test in a non-production environment before using it in production.
+    Please note that while being developed by a Microsoft employee, AzConvertV1toV2Disks.ps1 is not supported by Microsoft.
+    There are none implicit or explicit obligations related to this project, it is provided 'as is' with no warranties and confer no rights.
+    The author is not responsible for any issues that may arise from the use of this code.
+    
+
