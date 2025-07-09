@@ -192,10 +192,10 @@ function Convert-Disks {
             if ($backupItem) {
                 Write-Host "VM '$vmName' is protected by Azure Backup with policy '$($policy.Name)' in vault '$($vault.Name)'." -ForegroundColor Cyan
                 if ($isEnhanced) {
-                    Write-Host "The policy is an Enhanced Backup Policy." -ForegroundColor Green
+                    Write-Host "The policy is an Enhanced Backup Policy. Continuing Script" -ForegroundColor Cyan
                 } else {
-                    Write-Host "The policy is a Standard Backup Policy. Please convert to Enhanced Policy." -ForegroundColor Yellow
-                    Return
+                    Write-Host "The policy is a Standard Backup Policy. Please convert to Enhanced Policy." -ForegroundColor Red
+                    return
                     }
             }
             else{
@@ -210,7 +210,7 @@ function Convert-Disks {
             if ($updateAzDisk.Sku.name -eq "PremiumV2_LRS") {
                 Write-Host "Successfully Converted Disk: $diskname to Premium SSD v2" -ForegroundColor Green
             } else {
-            Write-Host "ERROR converting disk $diskname to Premium SSD v2. Skipping disk." -ForegroundColor Red
+                Write-Host "ERROR converting disk $diskname to Premium SSD v2. Skipping disk." -ForegroundColor Red
             return
             }
 }
