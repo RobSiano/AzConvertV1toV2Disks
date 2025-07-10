@@ -397,7 +397,8 @@ foreach ($row in $csvData) {
                                         $diskname = $disk.name
                                         if ($disk.DiskSizeGB -gt 512 -and $disk.OsType -eq $null -and $disk.Sku.Name -eq "Premium_LRS") {    
                                         
-                                                # Call the Convert-Disks function for disk
+                                                # Call the Convert-Disks Function for disk conversion
+                                                # This function will handle the conversion of the disk to Premium SSD V2
                                                 Try {
                                                     Write-Host "Converting disk: $diskname on $vmname to Premium SSD V2..." -ForegroundColor Cyan
                                                     Convert-Disks -diskname $diskname -ResourceGroupName $vm.ResourceGroupName
