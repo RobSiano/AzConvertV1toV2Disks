@@ -30,6 +30,7 @@
     The author is not responsible for any issues that may arise from the use of this script.
 #>
 
+
 param ([string]$SubscriptionId
 )
 Write-Host "AzConvertV1toV2Disks Script started at $(Get-Date)" -ForegroundColor Cyan
@@ -38,9 +39,9 @@ Write-Host "AzConvertV1toV2Disks Script started at $(Get-Date)" -ForegroundColor
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $LogFile = ".\AzConvertV1toV2DisksLog_$timestamp.txt"
 Start-Transcript -Path $LogFile -Append
-Write-Host "AzConvertV1toV2Disks logging started to file $LogFile" -ForegroundColor Cyan
+Write-Host "AzConvertV1toV2Disks logging started to file '$LogFile'" -ForegroundColor Cyan
 
-# Check if Az module is installed
+# Check if Az module is installed (Depending on your IDE you may want to # this out)
 if (-not (Get-Module -ListAvailable -Name Az)) {
     Write-Host "Az module is not installed. Installing Az module..." -ForegroundColor Yellow
     Install-Module -Name Az -AllowClobber -Force
@@ -48,7 +49,7 @@ if (-not (Get-Module -ListAvailable -Name Az)) {
    Write-Host "Az module is already installed." -ForegroundColor Green
 }   
 
-# Import the Az module and check if it has imported successfully
+# Import the Az module and check if it has imported successfully (Depending on your IDE you may want to # this out)
 Import-Module Az -Force
 if (Get-Module -Name Az) {              
     Write-Host "Az module imported successfully." -ForegroundColor Green
@@ -70,13 +71,23 @@ $OpenFileDialog.Title = "Select a CSV file"
 Write-Host "Opening Explorer to select a CSV file..." -ForegroundColor Green
     if ($OpenFileDialog.ShowDialog() -eq "OK") {
         $csvPath = $OpenFileDialog.FileName
-        Write-Host "Importing CSV from: $csvPath"
+        Write-Host "Importing CSV from: '$csvPath'" -ForegroundColor Green
     
         # Import the CSV
         $csvData = Import-Csv -Path $csvPath
-        return $csvData
+        if ($csvdata.count -eq 0) {
+            Write-Host "No data found in the CSV file. Please ensure the file is not empty." -ForegroundColor Red
+            return
+        }
+        else{
+            $csvcount = $csvData.Count
+            Write-Host "Successfully imported CSV data from: '$csvPath'. '$csvcount' entries found." -ForegroundColor Green
+            return $csvData
+        }
+        
     } else {
-        Write-Host "No file selected."
+        Write-Host "No file selected." -ForegroundColor Red
+        return
     }
 }
 # ---------------------------------- End of New-CSV-File function ----------------------------------------
@@ -89,56 +100,55 @@ function Convert-Disks {
     # Check if the disk exists in the specified subscription
     $disk = Get-AzDisk -DiskName $diskname -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
     if ($disk.count -eq 0) {
-        Write-Host "$diskname not found. Skipping." -ForegroundColor Yellow
+        Write-Host "Disk '$diskname' not found. Skipping." -ForegroundColor Yellow
         return
     }
     if ($disk.count -ne 1) {
-        Write-Host "$diskname multiples found. Check inputs." -ForegroundColor Yellow
+        Write-Host "Disk '$diskname' multiples found. Check inputs." -ForegroundColor Yellow
         return
     }
     
-    # Begin to Convert Disks 
+            # Define the VM variables to be used in the function and begin processing disks
             $vm = Get-AzVM -ResourceGroupName $disk.ResourceGroupName -Name $disk.managedby.split('/')[-1]
             $vmname = $vm.Name
-            Write-Host "Processing disk: $diskname for VMname $vmname" -ForegroundColor Cyan
+            Write-Host "Processing disk: '$diskname' for VM: '$vmname'" -ForegroundColor Cyan
             
 
-            # Disable disk Caching if enabled (Unsupported on PremiumV2 disks)
+            # Disable disk Caching if Enabled (Unsupported on PremiumV2 disks)
             $cachecheck = $vm.StorageProfile.DataDisks | Where-Object { $_.Name -eq $disk.name} | Select-Object Caching
             if ($cachecheck.Caching -ne "None") {
             $setdisk = Set-AzVMDataDisk -VM $vm -Name $disk.name -Caching None
             $updatevm = Update-AzVM -VM $vm -ResourceGroupName $vm.ResourceGroupName -ErrorAction SilentlyContinue
                 if ($updatevm.IsSuccessStatusCode -eq $true) {
-                    Write-Host "Disk $diskname caching successfully set to None." -ForegroundColor Green
+                    Write-Host "Disk '$diskname' caching successfully set to None." -ForegroundColor Green
                 } else {
-                    Write-Host "ERROR setting caching to None for disk $diskname. Skipping disk." -ForegroundColor Red
+                    Write-Host "ERROR setting caching to None for disk '$diskname'. Skipping disk." -ForegroundColor Red
                     return
                         }
             } else {
-                Write-Host "Disk $diskname already has caching set to None." -ForegroundColor Cyan    
+                Write-Host "Disk '$diskname' already has caching set to None." -ForegroundColor Cyan    
             }
 
-            # Disable disk bursting (Bursting can only be deactivated 12 hours after activation)
+            # Disable Disk Bursting (Bursting can only be deactivated 12 hours after Bursting has been activated)
             if ($disk.BurstingEnabled -ne $false) {
-                    
                     Write-Host "Disabling bursting on disk: $diskname" -ForegroundColor Cyan
                     $diskconfig = New-AzDiskUpdateConfig -BurstingEnabled $false
                     $diskupdate = Update-AzDisk -ResourceGroupName $disk.ResourceGroupName -DiskName $disk.name -Diskupdate $diskconfig -ErrorAction SilentlyContinue
                     if ($diskupdate.ProvisioningState -eq "Succeeded") {
-                        Write-Host "Successfully disabled bursting on disk: $diskname" -ForegroundColor Green
+                        Write-Host "Successfully disabled bursting on disk: '$diskname'" -ForegroundColor Green
                     } else {
-                        Write-Host "ERROR disabling bursting on disk $diskname. Check Activity Logs. Please Note: Bursting can only be deactivated 12 hours after activation. Skipping disk." -ForegroundColor Red
+                        Write-Host "ERROR disabling bursting on disk '$diskname'. Check Activity Logs. Please Note: Bursting can only be deactivated 12 hours after activation. Skipping disk." -ForegroundColor Red
                         return
                     } 
             } else{
-                    Write-Host "ERROR disabling bursting on disk $diskname. Check Activity Logs. Please Note: Bursting can only be deactivated 12 hours after activation." -ForegroundColor Red
+                    Write-Host "ERROR disabling bursting on disk '$diskname'. Check Activity Logs. Please Note: Bursting can only be deactivated 12 hours after activation." -ForegroundColor Red
                     return  
                 }
 
             # Update encryption settings from double to single encryption (You will need to re-enable double encryption after conversion)
             $DiskEncryptionType= $disk.Encryption.Type
             if ($DiskEncryptionType -ne "EncryptionAtRestWithPlatformAndCustomerKeys"){
-                Write-Host "Disk $diskname does not have Double Encryption Enabled. Skipping encryption update." -ForegroundColor Cyan
+                Write-Host "Disk $diskname does not have Double Encryption Enabled. Skipping encryption changes." -ForegroundColor Cyan
                 } else {
                     $diskEncryptionSetName = $disk.Encryption.DiskEncryptionSet.Id.Split('/')[-1]
                     $diskEncryptionSet = Get-AzDiskEncryptionSet -ResourceGroupName $disk.ResourceGroupName -Name $diskEncryptionSetName
@@ -147,71 +157,23 @@ function Convert-Disks {
                         $ChangeDisk = New-AzDiskUpdateConfig -EncryptionType "EncryptionAtRestWithCustomerKey” -DiskEncryptionSetId $diskEncryptionSet.Id
                         $UpdateDisk = Update-AzDisk -ResourceGroupName $disk.ResourceGroupName -DiskName $disk.Name -diskupdate $ChangeDisk
                         if ($UpdateDisk.IsSuccessStatusCode -eq $true) {
-                            Write-Host "Updated encryption settings for disk: $diskname" -ForegroundColor Green
+                            Write-Host "Updated encryption settings for disk: '$diskname'" -ForegroundColor Green
                         } else{
-                            Write-Host "ERROR updating encryption settings for disk $diskname. Skipping disk." -ForegroundColor Red
+                            Write-Host "ERROR updating encryption settings for disk '$diskname'. Skipping disk." -ForegroundColor Red
                             return
                             }
                         }
                     }
 
-            # Check if the VM is protected by Azure Backup
-            # Get all Recovery Services vaults
-            $vaults = Get-AzRecoveryServicesVault
-
-            foreach ($vault in $vaults) {
-                Set-AzRecoveryServicesVaultContext -Vault $vault
-
-                # Get all containers of type AzureVM
-                $containers = Get-AzRecoveryServicesBackupContainer -ContainerType AzureVM
-                $container = $containers | Where-Object { $_.FriendlyName -eq $vmName }
-
-                if ($container) {
-                    $backupItem = Get-AzRecoveryServicesBackupItem -Container $container -WorkloadType AzureVM | Where-Object {
-                        $_.Properties.SourceResourceId -eq $vmId
-                    }
-
-                    if ($backupItem) {
-                        $policy = Get-AzRecoveryServicesBackupProtectionPolicy -Name $backupItem.ProtectionPolicyName
-
-                        $isEnhanced = $policy.PolicySubType -eq "Enhanced"
-
-                        $backuparray += [PSCustomObject]@{
-                            VMName            = $vmName
-                            VaultName         = $vault.Name
-                            PolicyName        = $policy.Name
-                            IsEnhancedPolicy  = $isEnhanced
-                            BackupManagementType        = $policy.BackupManagementType
-                        }
-
-                        break
-                    }
-                }
-            }
-
-            if ($backupItem) {
-                Write-Host "VM '$vmName' is protected by Azure Backup with policy '$($policy.Name)' in vault '$($vault.Name)'." -ForegroundColor Cyan
-                if ($isEnhanced) {
-                    Write-Host "The policy is an Enhanced Backup Policy. Continuing Script" -ForegroundColor Cyan
-                } else {
-                    Write-Host "The policy is a Standard Backup Policy. Please convert to Enhanced Policy." -ForegroundColor Red
-                    return
-                    }
-            }
-            else{
-                Write-Output "VM '$vmName' is not protected by Azure Backup. Continuing Script" -ForegroundColor Cyan
-                }
-
-
             # Update the disk SKU to PremiumV2_LRS
             $diskmigration = get-azdisk $disk.Name -ResourceGroupName $disk.ResourceGroupName
             $diskconfignew = New-AzDiskUpdateConfig -skuname "PremiumV2_LRS" -BurstingEnabled $false
-            $updateAzDisk = Update-AzDisk -ResourceGroupName $diskmigration.ResourceGroupName -DiskName $diskmigration.Name -Diskupdate $diskconfignew
-            if ($updateAzDisk.Sku.name -eq "PremiumV2_LRS") {
-                Write-Host "Successfully Converted Disk: $diskname to Premium SSD v2" -ForegroundColor Green
+            $UpdateAzDisk = Update-AzDisk -ResourceGroupName $diskmigration.ResourceGroupName -DiskName $diskmigration.Name -Diskupdate $diskconfignew
+            if ($UpdateAzDisk.Sku.name -eq "PremiumV2_LRS") {
+                Write-Host "Successfully Converted Disk: '$diskname' to Premium SSD v2 for VM '$vmname'" -ForegroundColor Green
             } else {
-                Write-Host "ERROR converting disk $diskname to Premium SSD v2. Skipping disk." -ForegroundColor Red
-            return
+                Write-Host "ERROR converting disk '$diskname' to Premium SSD v2 for '$vmname'. Skipping disk." -ForegroundColor Red
+                return
             }
 }
 # ---------------------------------- End of Convert-Disks function ----------------------------------------
@@ -225,8 +187,7 @@ param ([Parameter(Mandatory = $true)][string]$SubscriptionIdrun)
 # This regex checks for a valid ID format, allowing for multiple IDs separated by commas
 if ($SubscriptionIdrun -notmatch '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(,[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})*$') {
     Write-Host "Invalid Subscription ID format. Please provide valid Subscription ID." -ForegroundColor Red
-    Stop-Transcript
-    exit
+    return
 } else {
     Write-Host "Valid Subscription ID format detected." -ForegroundColor Cyan
 }
@@ -243,26 +204,23 @@ if ($currentSubscriptionID -eq $SubscriptionIdrun) {
             Write-Host "Successfully connected to Azure." -ForegroundColor Green
         } else {
             Write-Host "Failed to connect to Azure. Exiting script." -ForegroundColor Red
-            Stop-Transcript
-            exit    
+            return    
         }
 
         # Set the subscription context
         $setazcontext = Set-AzContext -SubscriptionId $SubscriptionIdrun
         if ($setazcontext.Subscription.id -eq $SubscriptionIdrun){
-            Write-Host "Successfully set context to subscription: $SubscriptionId to ensure correct Subscription selected" -ForegroundColor Green
+            Write-Host "Successfully set context to subscription: '$SubscriptionIdrun' to ensure correct Subscription selected" -ForegroundColor Green
         } else {
-            Write-Host "Failed to set context to subscription: $SubscriptionIdrun. Exiting script." -ForegroundColor Red
-            Stop-Transcript
-            Exit
+            Write-Host "Failed to set context to subscription: '$SubscriptionIdrun'. Exiting script." -ForegroundColor Red
+            return
         }
 
         # Ensure the user has the necessary permissions to manage disks in the specified subscriptions
         $permissions = Get-AzRoleAssignment -Scope "/subscriptions/$SubscriptionIdrun" | Where-Object { $_.RoleDefinitionName -eq "Contributor" -or $_.RoleDefinitionName -eq "Owner" }
         if (-not $permissions) {    
             Write-Host "You do not have the necessary permissions to manage disks in the specified subscription. Please ensure you have 'Contributor' or 'Owner' role." -ForegroundColor Red
-            Stop-Transcript
-            exit
+            return
         } else {
             Write-Host "You have the necessary permissions to manage disks in the specified subscription." -ForegroundColor Green
         }
@@ -290,9 +248,9 @@ if (-not $SubscriptionId) {
         }
 
 
-       $csvcount = $csvData.Count
+        $csvcount = $csvData.Count
         if ($csvData.count -ne 0) {
-            Write-Host "Successfully imported CSV data. $csvcount VM's were found. " -ForegroundColor Green
+            Write-Host "$csvcount VM's were found in the CSV file. Continuing." -ForegroundColor Green
         } else {
             Write-Host "No valid Subscription ID found in the CSV file. Exiting script." -ForegroundColor Red
             Stop-Transcript
@@ -305,7 +263,7 @@ if (-not $SubscriptionId) {
         exit
     }
 } else {
-        Write-Host "Processing Specified Subscription ID: $SubscriptionId" -ForegroundColor Cyan
+        Write-Host "Processing Specified Subscription ID: '$SubscriptionId'" -ForegroundColor Cyan
         $csvData = @()
         
         # Create a custom object with the provided Subscription ID
@@ -324,26 +282,25 @@ foreach ($row in $csvData) {
 
             # Call the login function for each subscription
             try {
-                login-to-azure -SubscriptionIdrun $SubscriptionIdrun
+                Login-to-Azure -SubscriptionIdrun $SubscriptionIdrun
                 } 
             catch {
-                Write-Host "An error occurred while trying to login to Azure for Subscription ID: $SubscriptionIdrun. Please ensure you have the necessary permissions." -ForegroundColor Red
-                Stop-Transcript
-                exit}
+                Write-Host "An error occurred while trying to login to Azure for Subscription ID: '$SubscriptionIdrun'. Please ensure you have the necessary permissions." -ForegroundColor Red
+                continue
+                }
 
               
             # Check if the VM is specified, if not, get all VMs in the subscription
                 If ($VM.count -eq 0 -or $VM -eq $null) {
-                    Write-Host "No Virtual Machine specified. Getting all VMs in Subscription: $SubscriptionIdrun" -ForegroundColor Cyan
+                    Write-Host "No Virtual Machine specified via CSV. Getting all VMs in Subscription: '$SubscriptionIdrun'" -ForegroundColor Cyan
                     # Get all VMs in the subscription
                     $VMs = Get-AzVM -ErrorAction SilentlyContinue
                     if ($VMs.Count -eq 0) {
-                        Write-Host "No VMs found in Subscription: $SubscriptionIdrun. Exiting script." -ForegroundColor Yellow
-                        Stop-Transcript
-                        exit
+                        Write-Host "No VMs found in Subscription: '$SubscriptionIdrun'. Exiting script." -ForegroundColor Yellow
+                        continue
                     }
                 } else{
-                    Write-Host "Getting VM: $VM in Resource Group: $RG in Subscription: $SubscriptionIdrun" -ForegroundColor Cyan
+                    Write-Host "Getting VM: '$VM' in Resource Group: '$RG' in Subscription: '$SubscriptionIdrun'" -ForegroundColor Cyan
                     $VMs = Get-AzVM -ResourceGroupName $RG -Name $VM -ErrorAction SilentlyContinue 
                 }
 
@@ -368,69 +325,129 @@ foreach ($row in $csvData) {
             }
 
             # Starting disk conversion process
-            Write-Host "Starting disk conversion in $subscriptionIdrun..." -ForegroundColor Green
+            Write-Host "Starting disk conversion in '$subscriptionIdrun'" -ForegroundColor Cyan
             foreach ($vm in $matchingVMs){
-                            #stopping VM if it is running
                             $vmname = $vm.name
-                            Write-Host "Stopping VM: $vmname" -ForegroundColor Green
-                            $stoppedVM = Stop-AzVM -ResourceGroupName $vm.ResourceGroupName -Name $vm.Name -Force
+                            $rgroup = $vm.ResourceGroupName
+                            
+                            # Check if the VM is protected by Azure Backup
+                            # Get all Recovery Services vaults and loop through them looking for the VM
+                            $vaults = Get-AzRecoveryServicesVault -ResourceGroupName $rgroup -ErrorAction SilentlyContinue
+                            if ($vaults.Count -eq 0) {
+                                Write-Host "No Recovery Services Vaults found in Resource Group: '$rgroup'. Continuing." -ForegroundColor Cyan
+                            }
+                            else{
+                                Write-Host "Found $($vaults.Count) Recovery Services Vault(s) in Resource Group: '$rgroup'" -ForegroundColor Cyan
+                            
+                                foreach ($vault in $vaults) {
+                                    Write-host "Checking Vault: '$($vault.Name)' for VM: '$vmname'" -ForegroundColor Cyan
+                                    Set-AzRecoveryServicesVaultContext -Vault $vault
+
+                                    # Get all containers of type AzureVM
+                                    $containers = Get-AzRecoveryServicesBackupContainer -ContainerType AzureVM
+                                    $container = $containers | Where-Object { $_.FriendlyName -eq $vmname }
+
+                                    if ($container) {
+                                        $backupItem = Get-AzRecoveryServicesBackupItem -Container $container -WorkloadType AzureVM | Where-Object {
+                                            $_.Properties.SourceResourceId -eq $vmId
+                                        }
+
+                                        if ($backupItem) {
+                                            $policy = Get-AzRecoveryServicesBackupProtectionPolicy -Name $backupItem.ProtectionPolicyName
+
+                                            $isEnhanced = $policy.PolicySubType -eq "Enhanced"
+
+                                            $backuparray += [PSCustomObject]@{
+                                                VMName            = $vmname
+                                                VaultName         = $vault.Name
+                                                PolicyName        = $policy.Name
+                                                IsEnhancedPolicy  = $isEnhanced
+                                                BackupManagementType        = $policy.BackupManagementType
+                                            }
+                                            break
+                                        }
+                                    }
+                                }
+                            }
+
+                            if ($backupItem) {
+                                Write-Host "VM '$vmname' is protected by Azure Backup with policy '$($policy.Name)' in vault '$($vault.Name)'." -ForegroundColor Cyan
+                                if ($isEnhanced) {
+                                    Write-Host "The policy applied to VM '$vmname' is an Enhanced Backup Policy. Continuing Script" -ForegroundColor Cyan
+                                } else {
+                                    Write-Host "ERROR: The policy for Azure Backup applied to VM '$vmname' is a legacy Backup Policy. Please convert to Enhanced Policy. Skipping VM." -ForegroundColor Red
+                                    continue
+                                    }
+                            }
+                            else{
+                                Write-Host "VM '$vmname' is not protected by Azure Backup. Continuing Script" -ForegroundColor Cyan
+                                }
+
+                            #stopping VM if it is running
+                            Write-Host "Stopping VM: '$vmname'" -ForegroundColor Cyan
+                            $stoppedVM = Stop-AzVM -ResourceGroupName $rgroup -Name $vm.Name -Force
                             
                             # Checking VM is Deallocated
-                            $vmrecheck = get-azvm -status -resourcegroupname $vm.ResourceGroupName -name $vm.Name
+                            $vmrecheck = get-azvm -status -resourcegroupname $rgroup -name $vm.Name
                             if ($vmrecheck.statuses.DisplayStatus[-1] -eq "VM deallocated") {
-                                    Write-Host "Successfully stopped VM: $($vm.Name)" -ForegroundColor Green
+                                    Write-Host "Successfully stopped VM: '$vmname'." -ForegroundColor Green
                                     $VMstopped = $true
                             } else {
-                                    Write-Host "ERROR stopping VM: $($vm.Name). Skipping disk conversion." -ForegroundColor Red
+                                    Write-Host "ERROR stopping VM: '$vmname'. Skipping disk conversion." -ForegroundColor Red
                                     continue
                                     }
                             
                                     # Get all data disks attached to the VM and then loop through conversion for qualifying disks
                                     $allDataDisks = $vm.StorageProfile.DataDisks
                                     foreach ($diskRef in $allDataDisks) {
-                                        $disk = Get-AzDisk -DiskName $diskRef.Name -ResourceGroupName $vm.ResourceGroupName -ErrorAction SilentlyContinue
+                                        $disk = Get-AzDisk -DiskName $diskRef.Name -ResourceGroupName $rgroup -ErrorAction SilentlyContinue
+                                        $diskname = $disk.name
                                         if ($disk.count -eq 0) {
-                                            Write-Host "Disk $diskRef Name not found in Resource Group: $vm.ResourceGroupName. Skipping disk." -ForegroundColor Yellow
+                                            Write-Host "Disk '$diskref' Name not found in Resource Group: '$rgroup'. Skipping disk." -ForegroundColor Yellow
                                             continue
                                         }
                                         
-                                        $diskname = $disk.name
                                         if ($disk.DiskSizeGB -gt 512 -and $disk.OsType -eq $null -and $disk.Sku.Name -eq "Premium_LRS") {    
                                         
                                                 # Call the Convert-Disks Function for disk conversion
                                                 # This function will handle the conversion of the disk to Premium SSD V2
                                                 Try {
-                                                    Write-Host "Converting disk: $diskname on $vmname to Premium SSD V2..." -ForegroundColor Cyan
-                                                    Convert-Disks -diskname $diskname -ResourceGroupName $vm.ResourceGroupName
+                                                    Write-Host "Converting disk: '$diskname' on '$vmname' to Premium SSD V2." -ForegroundColor Cyan
+                                                    Convert-Disks -diskname $diskname -ResourceGroupName $rgroup
                                                 }
                                                 catch {
-                                                    Write-Host "ERROR in Convert-Disks function for disk $diskname" -ForegroundColor Red
+                                                    Write-Host "ERROR in Convert-Disks Function for disk '$diskname'. Please review logs." -ForegroundColor Red
                                                     continue
                                                 }
                                         } else{
-                                        write-host "$diskname does not meet the conversion criteria. Skipping disk." -ForegroundColor Yellow
+                                        write-host "Disk '$diskname' does not meet the conversion criteria. Skipping disk." -ForegroundColor Yellow
                                         continue
                                         }
                                     }
 
                             # Start the VM if it was stopped for the conversion
                             if ($vm -ne $null -and $VMstopped -eq $true) {
-                                Write-Host "Starting VM: $vmname" -ForegroundColor Green
+                                Write-Host "Starting VM: $vmname" -ForegroundColor Cyan
                                 $startVM = Start-AzVM -ResourceGroupName $vm.ResourceGroupName -Name $vm.name
                                 $vmstatus = Get-AzVM -ResourceGroupName $vm.ResourceGroupName -Name $vm.name -Status | Where-Object {$_.Statuses.Code -eq "PowerState/running"} 
                                 if($vmstatus.statuses.DisplayStatus[-1] -eq "VM running") {
-                                    Write-Host "Successfully started VM: $vmname" -ForegroundColor Green
+                                    Write-Host "Successfully started VM: '$vmname'" -ForegroundColor Green
                                 } else {
-                                    Write-Host "ERROR starting VM: $vmname. Please check Activity Logs." -ForegroundColor Red
+                                    Write-Host "ERROR starting VM: '$vmname'. Please check Activity Logs." -ForegroundColor Red
                                     continue
                                 }
                             } else {
-                            Write-Host "was not attached to any VM or VM was already deallocated. Skipping VM start." -ForegroundColor Cyan
+                            Write-Host "Disk '$diskname' was not attached to any VM or VM was already deallocated. Skipping VM start." -ForegroundColor Cyan
                             }
+                            
+                            # End of processing for each VM in the CSV file
+                            Write-Host "Completed processing disk conversions for VM: '$vmname" -ForegroundColor Cyan
                         }
+    # End of processing for each VM in the CSV file
+    Write-Host "Completed processing for Subscription ID: $SubscriptionIdrun" -ForegroundColor Cyan               
 }
-
+            
 
 # End of script
-Write-Host "AzConvertV1toV2Disks Script completed at $(Get-Date)" -ForegroundColor Green
+Write-Host "AzConvertV1toV2Disks Script Completed at $(Get-Date)" -ForegroundColor Green
 Stop-Transcript
