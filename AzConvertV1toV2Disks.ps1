@@ -440,10 +440,10 @@ foreach ($row in $csvData) {
                             Write-Host "Disk '$diskname' was not attached to any VM or VM was already deallocated. Skipping VM start." -ForegroundColor Cyan
                             }
                             
-                            # End of processing for each VM in the CSV file
+                            # End of processing for each VM in the loop
                             Write-Host "Completed processing disk conversions for VM: '$vmname" -ForegroundColor Cyan
                         }
-    # End of processing for each VM in the CSV file
+    # End of processing for each VM in the loop
     Write-Host "Completed processing for Subscription ID: $SubscriptionIdrun" -ForegroundColor Cyan               
 }
             
