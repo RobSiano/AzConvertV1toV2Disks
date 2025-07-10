@@ -52,13 +52,13 @@ Resources
 | extend VirtualMachine = tostring(split(managedBy, "/")[-1])
 | extend SubscriptionID = tostring(split(managedBy, "/")[2])
 | project
-   Name,
-   ResourceGroup,
+   name,
+   resourceGroup,
    DiskResourceID=id,
-   Location,
-   BurstingEnabled = tostring(props.burstingEnabled),
-   EncryptionType = tostring(props.encryption.type),
-   Caching = tostring(props.diskState), // Note: caching is typically set at the VM level, not directly on the dis
+   location,
+   burstingEnabled = tostring(props.burstingEnabled),
+   encryptionType = tostring(props.encryption.type),
+   caching = tostring(props.diskState), // Note: caching is typically set at the VM level, not directly on the dis
    VirtualMachineResourceID=managedBy,
    VirtualMachine,
    SubscriptionID
