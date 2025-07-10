@@ -52,19 +52,19 @@ Resources
 | extend VirtualMachine = tostring(split(managedBy, "/")[-1])
 | extend SubscriptionID = tostring(split(managedBy, "/")[2])
 | project
-   name,
-   resourceGroup,
+   Name,
+   ResourceGroup,
    DiskResourceID=id,
-   location,
-   burstingEnabled = tostring(props.burstingEnabled),
-   encryptionType = tostring(props.encryption.type),
-   caching = tostring(props.diskState), // Note: caching is typically set at the VM level, not directly on the dis
+   Location,
+   BurstingEnabled = tostring(props.burstingEnabled),
+   EncryptionType = tostring(props.encryption.type),
+   Caching = tostring(props.diskState), // Note: caching is typically set at the VM level, not directly on the dis
    VirtualMachineResourceID=managedBy,
    VirtualMachine,
    SubscriptionID
 ```
    
-3. Select Download as CSV file and save to your local disk. (Modify the file as required to remove target VM's)
+3. Select Download as CSV file and save to your local disk. (Modify the file as required to remove target VM's. The 3 required columns are SubscriptionID, VirtualMachine, and ResourceGroup)
 
 4. Download **AzConvertV1toV2Disks.ps1**
 
