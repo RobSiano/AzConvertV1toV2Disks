@@ -80,7 +80,7 @@ An Explorer window will appear for you to select the .CSV file and Submit it for
 7. Review Script Execution in terminal or log file.
 
 **Important Considerations:**
-For a more targeted approach, please consider using the CSV import Option 2 instead. Also consider re-enabling double encryption if required. If Azure Backup is enabled with an older policy then you will need to manually migrate to Enhanced policy or it will skip the VM. Please read the disclaimer at the top of the AzConvertV1toV2Disks.ps1 or below before executing the code and validate by testing in non-production environment.
+For a more targeted approach, please consider using the CSV import Option 2 instead. Also consider re-enabling double encryption if required. If Azure Backup is enabled with a Standard policy then you will need to manually migrate to Enhanced policy or it will skip the VM. Please read the disclaimer at the top of the AzConvertV1toV2Disks.ps1 or below before executing the code and validate by testing in non-production environment.
 
 ---
     DISCLAIMER
