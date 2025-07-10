@@ -58,7 +58,7 @@ Resources
    location,
    burstingEnabled = tostring(props.burstingEnabled),
    encryptionType = tostring(props.encryption.type),
-   caching = tostring(props.diskState), // Note: caching is typically set at the VM level, not directly on the dis
+   caching = tostring(props.diskState), // Note: caching is typically set at the VM level, not directly on the disk
    VirtualMachineResourceID=managedBy,
    VirtualMachine,
    SubscriptionID
