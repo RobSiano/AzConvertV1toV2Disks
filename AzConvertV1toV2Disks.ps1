@@ -78,8 +78,7 @@ Write-Host "Opening Explorer to select a CSV file..." -ForegroundColor Green
         if ($csvdata.count -eq 0) {
             Write-Host "No data found in the CSV file. Please ensure the file is not empty." -ForegroundColor Red
             return
-        }
-        else{
+        } else{
             $csvcount = $csvData.Count
             Write-Host "Successfully imported CSV data from: '$csvPath'. '$csvcount' entries found." -ForegroundColor Green
             return $csvData
@@ -378,8 +377,7 @@ foreach ($row in $csvData) {
                                     Write-Host "ERROR: The policy for Azure Backup applied to VM '$vmname' is a Standard Backup Policy. Please convert to Enhanced Policy. Skipping VM." -ForegroundColor Red
                                     continue
                                     }
-                            }
-                            else{
+                            } else{
                                 Write-Host "VM '$vmname' is not protected by Azure Backup. Continuing Script" -ForegroundColor Cyan
                                 }
 
