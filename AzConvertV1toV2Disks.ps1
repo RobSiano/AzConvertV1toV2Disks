@@ -375,7 +375,7 @@ foreach ($row in $csvData) {
                             Write-Host "Stopping VM: $vmname" -ForegroundColor Green
                             $stoppedVM = Stop-AzVM -ResourceGroupName $vm.ResourceGroupName -Name $vm.Name -Force
                             
-                            #checking VM is deallocated
+                            # Checking VM is Deallocated
                             $vmrecheck = get-azvm -status -resourcegroupname $vm.ResourceGroupName -name $vm.Name
                             if ($vmrecheck.statuses.DisplayStatus[-1] -eq "VM deallocated") {
                                     Write-Host "Successfully stopped VM: $($vm.Name)" -ForegroundColor Green
@@ -385,32 +385,32 @@ foreach ($row in $csvData) {
                                     continue
                                     }
                             
-                            # Get all data disks attached to the VM and then loop through conversion for qualifying disks
-                            $allDataDisks = $vm.StorageProfile.DataDisks
-                            foreach ($diskRef in $allDataDisks) {
-                                $disk = Get-AzDisk -DiskName $diskRef.Name -ResourceGroupName $vm.ResourceGroupName -ErrorAction SilentlyContinue
-                                if ($disk.count -eq 0) {
-                                    Write-Host "Disk $diskRef Name not found in Resource Group: $vm.ResourceGroupName. Skipping disk." -ForegroundColor Yellow
-                                    continue
-                                }
-                                
-                                $diskname = $disk.name
-                                if ($disk.DiskSizeGB -gt 512 -and $disk.OsType -eq $null -and $disk.Sku.Name -eq "Premium_LRS") {    
-                                
-                                        # Call the Convert-Disks function for disk
-                                        Try {
-                                            Write-Host "Converting disk: $diskname on $vmname to Premium SSD V2..." -ForegroundColor Cyan
-                                            Convert-Disks -diskname $diskname -ResourceGroupName $vm.ResourceGroupName
-                                        }
-                                        catch {
-                                            Write-Host "ERROR in Convert-Disks function for disk $diskname" -ForegroundColor Red
+                                    # Get all data disks attached to the VM and then loop through conversion for qualifying disks
+                                    $allDataDisks = $vm.StorageProfile.DataDisks
+                                    foreach ($diskRef in $allDataDisks) {
+                                        $disk = Get-AzDisk -DiskName $diskRef.Name -ResourceGroupName $vm.ResourceGroupName -ErrorAction SilentlyContinue
+                                        if ($disk.count -eq 0) {
+                                            Write-Host "Disk $diskRef Name not found in Resource Group: $vm.ResourceGroupName. Skipping disk." -ForegroundColor Yellow
                                             continue
                                         }
-                                } else{
-                                write-host "$diskname does not meet the conversion criteria. Skipping disk." -ForegroundColor Yellow
-                                continue
-                                }
-                            }
+                                        
+                                        $diskname = $disk.name
+                                        if ($disk.DiskSizeGB -gt 512 -and $disk.OsType -eq $null -and $disk.Sku.Name -eq "Premium_LRS") {    
+                                        
+                                                # Call the Convert-Disks function for disk
+                                                Try {
+                                                    Write-Host "Converting disk: $diskname on $vmname to Premium SSD V2..." -ForegroundColor Cyan
+                                                    Convert-Disks -diskname $diskname -ResourceGroupName $vm.ResourceGroupName
+                                                }
+                                                catch {
+                                                    Write-Host "ERROR in Convert-Disks function for disk $diskname" -ForegroundColor Red
+                                                    continue
+                                                }
+                                        } else{
+                                        write-host "$diskname does not meet the conversion criteria. Skipping disk." -ForegroundColor Yellow
+                                        continue
+                                        }
+                                    }
 
                             # Start the VM if it was stopped for the conversion
                             if ($vm -ne $null -and $VMstopped -eq $true) {
