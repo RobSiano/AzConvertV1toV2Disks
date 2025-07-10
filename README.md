@@ -25,7 +25,7 @@ Instructions
 
 2. Go to your Azure Subscription and obtain your SubscriptionID.
 
-3. Execute the AzConvertV1toV2Disks.ps1 script using command example below. (Recommend targeting a test environment)
+3. Execute the AzConvertV1toV2Disks.ps1 script using command example below. (Recommend targeting a test environment to start)
 
 The command to execute the code will be: 
 ```.\AzConvertV1toV2Disks.ps1 -SubscriptionID "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx"```
@@ -70,7 +70,7 @@ Resources
 
 5. Go to your Azure Subscription and obtain your SubscriptionID.
 
-6. Execute the AzConvertV1toV2Disks.ps1 script. (Recommend targeting a test environment)
+6. Execute the AzConvertV1toV2Disks.ps1 script. (Recommend targeting a test environment to start)
 
 The command to execute the code will be: 
 ```.\AzConvertV1toV2Disks```
