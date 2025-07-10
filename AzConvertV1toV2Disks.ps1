@@ -375,7 +375,7 @@ foreach ($row in $csvData) {
                                 if ($isEnhanced) {
                                     Write-Host "The policy applied to VM '$vmname' is an Enhanced Backup Policy. Continuing Script" -ForegroundColor Cyan
                                 } else {
-                                    Write-Host "ERROR: The policy for Azure Backup applied to VM '$vmname' is a legacy Backup Policy. Please convert to Enhanced Policy. Skipping VM." -ForegroundColor Red
+                                    Write-Host "ERROR: The policy for Azure Backup applied to VM '$vmname' is a Standard Backup Policy. Please convert to Enhanced Policy. Skipping VM." -ForegroundColor Red
                                     continue
                                     }
                             }
