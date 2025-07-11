@@ -296,7 +296,8 @@ foreach ($row in $csvData) {
                     $VMs = Get-AzVM -ErrorAction SilentlyContinue
                     if ($VMs.Count -eq 0) {
                         Write-Host "No VMs found in Subscription: '$SubscriptionIdrun'. Exiting script." -ForegroundColor Yellow
-                        continue
+                        Stop-Transcript
+                        exit
                     }
                 } else{
                     Write-Host "Getting VM: '$VM' in Resource Group: '$RG' in Subscription: '$SubscriptionIdrun'" -ForegroundColor Cyan
@@ -324,7 +325,14 @@ foreach ($row in $csvData) {
             }
 
             # Starting disk conversion process
+            if ($matchingVMs.Count -eq 0) {
+                Write-Host "No VMs found with disks that meet the conversion criteria in Subscription: '$SubscriptionIdrun'. Exiting script." -ForegroundColor Yellow
+                Stop-Transcript
+                exit
+            } else{
             Write-Host "Starting disk conversion in '$subscriptionIdrun'" -ForegroundColor Cyan
+            }
+
             foreach ($vm in $matchingVMs){
                             $vmname = $vm.name
                             $rgroup = $vm.ResourceGroupName
@@ -343,13 +351,20 @@ foreach ($row in $csvData) {
                                     Set-AzRecoveryServicesVaultContext -Vault $vault
 
                                     # Get all containers of type AzureVM
-                                    $containers = Get-AzRecoveryServicesBackupContainer -ContainerType AzureVM
+                                    $containers = Get-AzRecoveryServicesBackupContainer -ContainerType AzureVM -ErrorAction SilentlyContinue
                                     $container = $containers | Where-Object { $_.FriendlyName -eq $vmname }
+                                    
+                                    # Checking if ASR exists and if it does then verify VM is protected
+                                    $fabric = Get-AzRecoveryServicesAsrFabric -ErrorAction SilentlyContinue
+                                    if ($fabric){
+                                    $protectedcontainer = Get-AzRecoveryServicesAsrProtectionContainer -Fabric $fabric -ErrorAction SilentlyContinue
+                                    }
+                                    if ($protectedcontainer){
+                                    $ASRprotectedItems = Get-AzRecoveryServicesAsrReplicationProtectedItem -ProtectionContainer $protectedcontainer | Where-Object { $_.ProtectedItemType -eq $_.FriendlyName -eq $vmname} -ErrorAction SilentlyContinue
+                                    }
 
                                     if ($container) {
-                                        $backupItem = Get-AzRecoveryServicesBackupItem -Container $container -WorkloadType AzureVM | Where-Object {
-                                            $_.Properties.SourceResourceId -eq $vmId
-                                        }
+                                        $backupItem = Get-AzRecoveryServicesBackupItem -Container $container -WorkloadType AzureVM | Where-Object {$_.Properties.SourceResourceId -eq $vmId}
 
                                         if ($backupItem) {
                                             $policy = Get-AzRecoveryServicesBackupProtectionPolicy -Name $backupItem.ProtectionPolicyName
@@ -374,11 +389,18 @@ foreach ($row in $csvData) {
                                 if ($isEnhanced) {
                                     Write-Host "The policy applied to VM '$vmname' is an Enhanced Backup Policy. Continuing Script" -ForegroundColor Cyan
                                 } else {
-                                    Write-Host "ERROR: The policy for Azure Backup applied to VM '$vmname' is a Standard Backup Policy. Please convert to Enhanced Policy. Skipping VM." -ForegroundColor Red
+                                    Write-Host "ERROR: The policy for Azure Backup applied to VM '$vmname' is a Standard Backup Policy. Please convert to Enhanced Policy. Skipping VM." -ForegroundColor Yellow
                                     continue
                                     }
                             } else{
                                 Write-Host "VM '$vmname' is not protected by Azure Backup. Continuing Script" -ForegroundColor Cyan
+                                }
+                            
+                            if ($ASRprotectedItems) {
+                                Write-Host "VM '$vmname' is protected by Azure Site Recovery. Skipping VM." -ForegroundColor Yellow
+                                Continue
+                            } else {
+                                Write-Host "VM '$vmname' is not protected by Azure Site Recovery. Continuing." -ForegroundColor Cyan
                                 }
 
                             #stopping VM if it is running
