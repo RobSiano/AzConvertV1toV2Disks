@@ -317,7 +317,7 @@ foreach ($row in $csvData) {
                     foreach ($diskRef in $allDisks) {
                         $disk = Get-AzDisk -ResourceGroupName $ResourceGroupName -DiskName $diskRef.Name
 
-                        if ($disk.DiskSizeGB -gt 512 -and $disk.OsType -eq $null -and $disk.Sku.Name -eq "Premium_LRS") {
+                        if ($disk.DiskSizeGB -gt 3 -and $disk.OsType -eq $null -and $disk.Sku.Name -eq "Premium_LRS") {
                             $matchingVMs += $vm
                             break  # Stop checking more disks for this VM
                         }
@@ -427,7 +427,7 @@ foreach ($row in $csvData) {
                                             continue
                                         }
                                         
-                                        if ($disk.DiskSizeGB -gt 512 -and $disk.OsType -eq $null -and $disk.Sku.Name -eq "Premium_LRS") {    
+                                        if ($disk.DiskSizeGB -gt 3 -and $disk.OsType -eq $null -and $disk.Sku.Name -eq "Premium_LRS") {    
                                         
                                                 # Call the Convert-Disks Function for disk conversion
                                                 # This function will handle the conversion of the disk to Premium SSD V2
@@ -471,3 +471,4 @@ foreach ($row in $csvData) {
 # End of script
 Write-Host "AzConvertV1toV2Disks Script Completed at $(Get-Date)" -ForegroundColor Green
 Stop-Transcript
+
